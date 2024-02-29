@@ -83,16 +83,14 @@ namespace SkyrimSoulsRE::ConsoleCommandHooks
 	{
 		SKSE::Trampoline& trampoline = SKSE::GetTrampoline();
 
-		trampoline.write_call<5>(Offsets::ConsoleCommands::CenterOnCell_Hook.address() + 0x5B, CenterOnCell_Hook);
-		trampoline.write_call<5>(Offsets::ConsoleCommands::CenterOnWorld_Hook.address() + 0x104, CenterOnCell_Hook);
-		trampoline.write_call<5>(Offsets::ConsoleCommands::CenterOnExterior_Hook.address() + 0x109, CenterOnCell_Hook);
+		//ALL VERIFIED
+		trampoline.write_call<5>(Offsets::ConsoleCommands::CenterOnCell_Hook.address() + 0x5B, CenterOnCell_Hook);	
+		trampoline.write_call<5>(Offsets::ConsoleCommands::CenterOnWorld_Hook.address() + 0x108, CenterOnCell_Hook);
+		trampoline.write_call<5>(Offsets::ConsoleCommands::CenterOnExterior_Hook.address() + 0x118, CenterOnCell_Hook);
 
-		//SeaSparrow - Workaround for 1.6.1130+
-		/*
 		trampoline.write_call<5>(Offsets::ConsoleCommands::ServeTime_Hook.address() + 0xE, ServeTime_Hook);
 		REL::safe_write(Offsets::ConsoleCommands::ServeTime_Hook.address() + 0xE + 0x5, std::uint8_t(0x90));
 
-		trampoline.write_call<5>(Offsets::ConsoleCommands::SaveGame_Hook.address() + 0xC4, Save_Hook);
-		*/
+		trampoline.write_call<5>(Offsets::ConsoleCommands::SaveGame_Hook.address() + 0xC4, Save_Hook);		
 	}
 }

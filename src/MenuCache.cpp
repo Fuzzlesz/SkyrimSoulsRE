@@ -72,7 +72,7 @@ namespace SkyrimSoulsRE::MenuCache
 		if (Settings::GetSingleton()->enableMenuCaching)
 		{
 			SKSE::log::warn("Menu caching has been enabled. This feature is experimental.");
-			SKSE::GetTrampoline().write_call<6>(REL::ID{ 82325 }.address() + 0x1B8, (uintptr_t)CreateInstance_Hook);
+			SKSE::GetTrampoline().write_call<6>(REL::ID{ 80302 }.address() + 0x1B2, (uintptr_t)CreateInstance_Hook);  //VERIFIED
 		}
 	}
 }

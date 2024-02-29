@@ -12,6 +12,13 @@
       "cacheVariables": {
         "CMAKE_CONFIGURATION_TYPES": "Debug;Release",
         "CMAKE_CXX_FLAGS": "/EHsc /MP /W4 /external:anglebrackets /external:W0 $penv{CXXFLAGS}"
+      },
+      "errors": {
+        "deprecated": true
+      },
+      "warnings": {
+        "deprecated": true,
+        "dev": true
       }
     },
     {
@@ -37,28 +44,25 @@
       "toolset": "v143"
     },
     {
-      "name": "ae",
+      "name": "se",
       "hidden": true,
-      "binaryDir": "${sourceDir}/build-16",
-      "cacheVariables": {
-        "BUILD_SKYRIMAE": true
-      }
+      "binaryDir": "${sourceDir}/build"
     },
     {
-      "name": "vs2022-windows-vcpkg-ae",
+      "name": "vs2022-windows-vcpkg-se",
       "inherits": [
         "cmake-dev",
         "vcpkg",
         "windows",
         "vs2022",
-        "ae"
+        "se"
       ]
     }
   ],
   "buildPresets": [
     {
-      "name": "Release - 1.6",
-      "configurePreset": "vs2022-windows-vcpkg-ae",
+      "name": "vs2022-windows-vcpkg-se",
+      "configurePreset": "vs2022-windows-vcpkg-se",
       "configuration": "Release"
     }
   ]

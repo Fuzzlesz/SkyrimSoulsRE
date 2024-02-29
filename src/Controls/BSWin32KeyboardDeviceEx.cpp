@@ -20,6 +20,6 @@ namespace SkyrimSoulsRE
 
 	void BSWin32KeyboardDeviceEx::InstallHook()
 	{
-		SKSE::GetTrampoline().write_call<6>(Offsets::BSWin32KeyboardDevice::Process.address() + 0x2CB, (std::uintptr_t)ToUnicode_Hook);
+		SKSE::GetTrampoline().write_call<6>(Offsets::BSWin32KeyboardDevice::Process.address() + 0x20D, (std::uintptr_t)ToUnicode_Hook);
 	}
 }

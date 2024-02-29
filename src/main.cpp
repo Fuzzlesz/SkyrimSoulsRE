@@ -56,55 +56,53 @@ void MessageHandler(SKSE::MessagingInterface::Message* a_msg)
 	}
 }
 
-extern "C" DLLEXPORT constinit auto SKSEPlugin_Version = []() {
-	SKSE::PluginVersionData v;
-	v.PluginVersion({ Version::MAJOR, Version::MINOR, Version::PATCH });
-	v.PluginName(Version::NAME);
-	v.AuthorName("SeaSparrow");
-	v.UsesAddressLibrary();
-	v.UsesUpdatedStructs();
-	v.CompatibleVersions({ SKSE::RUNTIME_1_6_1130,
-		SKSE::RUNTIME_LATEST});
-	return v;
-}();
-
-extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
+extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface* a_skse, SKSE::PluginInfo* a_info)
 {
-	assert(SKSE::log::log_directory().has_value());
-	auto path = SKSE::log::log_directory().value() / std::filesystem::path(Version::NAME.data() + ".log"s);
-	auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path.string(), true);
-	auto log = std::make_shared<spdlog::logger>("global log", std::move(sink));
+	a_info->infoVersion = SKSE::PluginInfo::kVersion;
+	a_info->name = "Skyrim Souls RE";
+	a_info->version = Version::MAJOR;
 
-	log->set_level(spdlog::level::trace);
-	log->flush_on(spdlog::level::trace);
-
-	spdlog::set_default_logger(std::move(log));
-	spdlog::set_pattern("%g(%#): [%^%l%$] %v", spdlog::pattern_time_type::local);
-
-	SKSE::log::info("{} v{} -({})", Version::FORMATTED_NAME, Version::STRING, __TIMESTAMP__);
-
-	SKSE::AllocTrampoline(1 << 9, true);
-	SKSE::Init(a_skse);
-
-	auto messaging = SKSE::GetMessagingInterface();
-	if (messaging->RegisterListener("SKSE", MessageHandler))
-	{
-		SKSE::log::info("Messaging interface registration successful.");
-	}
-	else
-	{
-		SKSE::log::critical("Messaging interface registration failed.");
+	if (a_skse->IsEditor()) {
+		logger::critical("Loaded in editor, marking as incompatible"sv);
 		return false;
 	}
 
-	SkyrimSoulsRE::LoadSettings();
-	SKSE::log::info("Settings loaded.");
+	const auto ver = a_skse->RuntimeVersion();
+	if (ver
 
-	SkyrimSoulsRE::InstallHooks();
-	SKSE::log::info("Hooks installed.");
-
-	SKSE::log::info("Skyrim Souls RE loaded.");
+		< SKSE::RUNTIME_1_5_39
+	) {
+		logger::critical(FMT_STRING("Unsupported runtime version {}"), ver.string());
+		return false;
+	}
 
 	return true;
 }
 
+DLLEXPORT bool SKSEPlugin_Load(SKSE::LoadInterface* a_skse)
+	{
+	
+		SKSE::AllocTrampoline(1 << 9, true);
+		SKSE::Init(a_skse);
+
+		auto messaging = SKSE::GetMessagingInterface();
+		if (messaging->RegisterListener("SKSE", MessageHandler))
+		{
+			SKSE::log::info("Messaging interface registration successful.");
+		}
+		else
+		{
+			SKSE::log::critical("Messaging interface registration failed.");
+			return false;
+		}
+
+		SkyrimSoulsRE::LoadSettings();
+		SKSE::log::info("Settings loaded.");
+
+		SkyrimSoulsRE::InstallHooks();
+		SKSE::log::info("Hooks installed.");
+
+		SKSE::log::info("Skyrim Souls RE loaded.");
+
+		return true;
+	};

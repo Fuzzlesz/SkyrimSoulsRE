@@ -1,21 +1,16 @@
 {
   "name": "skyrim-souls-re",
-  "version-string": "2.3.2",
+  "version-string": "2.4.0",
   "description": "Unpauses menus",
   "homepage": "",
   "license": "MIT",
   "dependencies": [
-    "tomlplusplus",
+    "boost-stl-interfaces",
     "rsm-binary-io",
     "simpleini",
     "spdlog",
+    "tomlplusplus",
     "xbyak"
-  ],
-  "overrides": [
-    {
-      "name": "fmt",
-      "version": "9.1.0"
-    }
   ],
   "builtin-baseline": "b7dba7f9aad09a56900f21cd78cfda1258e54e38"
 }

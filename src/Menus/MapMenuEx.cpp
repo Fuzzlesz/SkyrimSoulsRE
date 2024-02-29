@@ -164,7 +164,7 @@ namespace SkyrimSoulsRE
 		REL::safe_write(Offsets::Menus::MapMenu::LocalMapUpdaterFunc.address() + 0x9F, std::uint8_t(0x90));
 
 		// Disable map menu background sound
-		REL::safe_write(Offsets::Menus::MapMenu::Ctor.address() + 0x52D, std::uint8_t(0xEB));
+		REL::safe_write(Offsets::Menus::MapMenu::Ctor.address() + 0x538, std::uint8_t(0xEB));  //VERIFIED
 
 		// Fix controls while journal is open
 		MapInputHandlerEx<RE::MapMoveHandler>::InstallHook(RE::VTABLE_MapMoveHandler[0]);
@@ -173,11 +173,12 @@ namespace SkyrimSoulsRE
 
 		auto& trampoline = SKSE::GetTrampoline();
 
+
 		// Prevent TerrainManager from updating while the menu is open.
 		// This prevents child worldspaces from rendering on top of their parents. Possibly avoids other issues as well.
 		_TerrainManagerUpdate = *reinterpret_cast<TerrainManagerUpdate_t*>(trampoline.write_call<5>(Offsets::BGSTerrainManager::TerrainManager_UpdateFunc.address() + 0x5D, (std::uintptr_t)BGSTerrainManager_Update_Hook));
 
 		// Fix for flickering/non-moving clouds
-		_UpdateClouds = *reinterpret_cast<UpdateClouds_t*>(trampoline.write_call<5>(Offsets::Menus::MapMenu::UpdateClouds_Hook.address() + 0x10E, (std::uintptr_t)UpdateClouds_Hook));
+		_UpdateClouds = *reinterpret_cast<UpdateClouds_t*>(trampoline.write_call<5>(Offsets::Menus::MapMenu::UpdateClouds_Hook.address() + 0x107, (std::uintptr_t)UpdateClouds_Hook));
 	}
 }

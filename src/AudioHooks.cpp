@@ -58,7 +58,8 @@ namespace SkyrimSoulsRE::Audio
 
 	void InstallHook()
 	{
-		SKSE::GetTrampoline().write_call<5>(Offsets::BSAudioManager::Hook.address() + 0xC6, (std::uintptr_t)SetListenerPosition_Hook);
-		SKSE::GetTrampoline().write_call<5>(Offsets::BSAudioManager::Hook.address() + 0x12E, (std::uintptr_t)SetListenerRotation_Hook);
+		//ALL VERIFIED
+		SKSE::GetTrampoline().write_call<5>(Offsets::BSAudioManager::Hook.address() + 0xBC, (std::uintptr_t)SetListenerPosition_Hook);
+		SKSE::GetTrampoline().write_call<5>(Offsets::BSAudioManager::Hook.address() + 0x124, (std::uintptr_t)SetListenerRotation_Hook);
 	}
 }
