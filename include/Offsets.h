@@ -8,8 +8,9 @@ namespace Offsets
 		static constexpr REL::ID CenterOnCell_Hook(static_cast<std::uint64_t>(22873));      // + 0x5B
 		static constexpr REL::ID CenterOnWorld_Hook(static_cast<std::uint64_t>(22876));     // + 0x104
 		static constexpr REL::ID CenterOnExterior_Hook(static_cast<std::uint64_t>(22875));  // + 0x109
-		static constexpr REL::ID ServeTime_Hook(static_cast<std::uint64_t>(22628));         // + 0xE
-		static constexpr REL::ID SaveGame_Hook(static_cast<std::uint64_t>(22940));          // + 0xC4
+		//SeaSparrow - Workaround for 1.6.1130+
+		//static constexpr REL::ID ServeTime_Hook(static_cast<std::uint64_t>(22628));         // + 0xE
+		//static constexpr REL::ID SaveGame_Hook(static_cast<std::uint64_t>(22940));          // + 0xC4
 	}
 
 	namespace BGSTerrainManager
@@ -35,22 +36,18 @@ namespace Offsets
 		static constexpr REL::ID Value2(static_cast<std::uint64_t>(388443));
 	}
 
+	//SeaSparrow - 1.6.1130+ workaround
+	/*
 	namespace ItemMenuUpdater
 	{
 		static constexpr REL::ID RequestItemListUpdate(static_cast<std::uint64_t>(52849));
 
-		// 640 only
 		static constexpr REL::ID RemoveAllItems(static_cast<std::uint64_t>(16118));
 		static constexpr REL::ID RemoveAllItems_Hook1(static_cast<std::uint64_t>(16121));  // + 0x16
 		static constexpr REL::ID RemoveAllItems_Hook2(static_cast<std::uint64_t>(19809));  // + 0x36
 		static constexpr REL::ID RemoveAllItems_Hook3(static_cast<std::uint64_t>(22005));  // + 0xBA
 		static constexpr REL::ID RemoveAllItems_Hook4(static_cast<std::uint64_t>(37496));  // + 0x255
 		static constexpr REL::ID RemoveAllItems_Hook5(static_cast<std::uint64_t>(56215));  // + 0x46
-
-		// 1130 + only
-		static constexpr REL::ID RemoveAllItems_1130(static_cast<std::uint64_t>(441568));
-		static constexpr REL::ID RemoveAllItems_Hook1_1130(static_cast<std::uint64_t>(16121));   // + 0x3A
-		static constexpr REL::ID RemoveAllItems_Hook2_1130(static_cast<std::uint64_t>(441567));  // + 0x55
 
 		static constexpr REL::ID RemoveItem_Actor(static_cast<std::uint64_t>(37797));
 		static constexpr REL::ID RemoveItem_TESObjectREFR(static_cast<std::uint64_t>(19689));
@@ -60,6 +57,7 @@ namespace Offsets
 		static constexpr REL::ID RemoveItem_Hook3(static_cast<std::uint64_t>(24715));  // + 0x472 (6 call) - Actor - when other NPCs interact
 		static constexpr REL::ID RemoveItem_Hook4(static_cast<std::uint64_t>(17887));  // + 0x26A (6 call) - TESObjectREFR - when other NPCs interact
 	}
+	*/
 
 	namespace Menus
 	{

@@ -15,7 +15,7 @@ void MessageHandler(SKSE::MessagingInterface::Message* a_msg)
 			SkyrimSoulsRE::Settings* settings = SkyrimSoulsRE::Settings::GetSingleton();
 
 			bool engineFixesPresent = false;
-			if (GetModuleHandle("EngineFixes.dll"))
+			if (SKSE::WinAPI::GetModuleHandle("EngineFixes.dll"))
 			{
 				if (SkyrimSoulsRE::EngineFixesConfig::load_config("Data/SKSE/Plugins/EngineFixes.toml"))
 				{
@@ -37,7 +37,7 @@ void MessageHandler(SKSE::MessagingInterface::Message* a_msg)
 				}
 			}
 
-			if (GetModuleHandle("DialogueMovementEnabler.dll"))
+			if (SKSE::WinAPI::GetModuleHandle("DialogueMovementEnabler.dll"))
 			{
 				SKSE::log::info("Dialogue Movement Enabler detected. Enabling compatibility.");
 				settings->isUsingDME = true;
@@ -56,56 +56,55 @@ void MessageHandler(SKSE::MessagingInterface::Message* a_msg)
 	}
 }
 
-extern "C"
+extern "C" DLLEXPORT constinit auto SKSEPlugin_Version = []() {
+	SKSE::PluginVersionData v;
+	v.PluginVersion({ Version::MAJOR, Version::MINOR, Version::PATCH });
+	v.PluginName(Version::NAME);
+	v.AuthorName("SeaSparrow");
+	v.UsesAddressLibrary();
+	v.UsesUpdatedStructs();
+	v.CompatibleVersions({ SKSE::RUNTIME_1_6_1130,
+		SKSE::RUNTIME_LATEST});
+	return v;
+}();
+
+extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
 {
-	DLLEXPORT SKSE::PluginVersionData SKSEPlugin_Version = []() {
-		SKSE::PluginVersionData v{};
-		v.PluginVersion(REL::Version{ Version::MAJOR, Version::MINOR, Version::PATCH, 0 });
-		v.PluginName(Version::NAME);
-		v.AuthorName(Version::AUTHOR);
-		v.CompatibleVersions({ SKSE::RUNTIME_SSE_1_6_640, SKSE::RUNTIME_SSE_LATEST_AE });
-		v.UsesAddressLibrary();
-		v.UsesStructsPost629();
-		return v;
-	}();
+	assert(SKSE::log::log_directory().has_value());
+	auto path = SKSE::log::log_directory().value() / std::filesystem::path(Version::NAME.data() + ".log"s);
+	auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path.string(), true);
+	auto log = std::make_shared<spdlog::logger>("global log", std::move(sink));
 
-	DLLEXPORT bool SKSEPlugin_Load(SKSE::LoadInterface* a_skse)
+	log->set_level(spdlog::level::trace);
+	log->flush_on(spdlog::level::trace);
+
+	spdlog::set_default_logger(std::move(log));
+	spdlog::set_pattern("%g(%#): [%^%l%$] %v", spdlog::pattern_time_type::local);
+
+	SKSE::log::info("{} v{} -({})", Version::FORMATTED_NAME, Version::STRING, __TIMESTAMP__);
+
+	SKSE::AllocTrampoline(1 << 9, true);
+	SKSE::Init(a_skse);
+
+	auto messaging = SKSE::GetMessagingInterface();
+	if (messaging->RegisterListener("SKSE", MessageHandler))
 	{
-		assert(SKSE::log::log_directory().has_value());
-		auto path = SKSE::log::log_directory().value() / std::filesystem::path(Version::NAME.data() + ".log"s);
-		auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path.string(), true);
-		auto log = std::make_shared<spdlog::logger>("global log", std::move(sink));
-
-		log->set_level(spdlog::level::trace);
-		log->flush_on(spdlog::level::trace);
-
-		spdlog::set_default_logger(std::move(log));
-		spdlog::set_pattern("%g(%#): [%^%l%$] %v", spdlog::pattern_time_type::local);
-
-		SKSE::log::info("{} v{} -({})", Version::FORMATTED_NAME, Version::STRING, __TIMESTAMP__);
-
-		SKSE::AllocTrampoline(1 << 9, true);
-		SKSE::Init(a_skse);
-
-		auto messaging = SKSE::GetMessagingInterface();
-		if (messaging->RegisterListener("SKSE", MessageHandler))
-		{
-			SKSE::log::info("Messaging interface registration successful.");
-		}
-		else
-		{
-			SKSE::log::critical("Messaging interface registration failed.");
-			return false;
-		}
-
-		SkyrimSoulsRE::LoadSettings();
-		SKSE::log::info("Settings loaded.");
-
-		SkyrimSoulsRE::InstallHooks();
-		SKSE::log::info("Hooks installed.");
-
-		SKSE::log::info("Skyrim Souls RE loaded.");
-
-		return true;
+		SKSE::log::info("Messaging interface registration successful.");
 	}
-};
+	else
+	{
+		SKSE::log::critical("Messaging interface registration failed.");
+		return false;
+	}
+
+	SkyrimSoulsRE::LoadSettings();
+	SKSE::log::info("Settings loaded.");
+
+	SkyrimSoulsRE::InstallHooks();
+	SKSE::log::info("Hooks installed.");
+
+	SKSE::log::info("Skyrim Souls RE loaded.");
+
+	return true;
+}
+

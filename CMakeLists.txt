@@ -1,24 +1,43 @@
 cmake_minimum_required(VERSION 3.21)
+set(NAME "SkyrimSoulsRE" CACHE STRING "")
+set(VERSION 2.3.2 CACHE STRING "")
 
-# Setup project
+# ---- Cache build vars ----
+macro(set_from_environment VARIABLE)
+	if(NOT DEFINED ${VARIABLE} AND DEFINED ENV{${VARIABLE}})
+		set(${VARIABLE} $ENV{${VARIABLE}})
+	endif()
+endmacro()
+
+macro(find_commonlib_path)
+	if(CommonLibName AND NOT ${CommonLibName} STREQUAL "")
+		find_path(CommonLibPath
+			include/REL/Relocation.h 
+			PATHS extern/${CommonLibName})
+	endif()
+endmacro()
+
+set_from_environment(VCPKG_ROOT) 
+add_compile_definitions(SKYRIM_AE)
+add_compile_definitions(SKYRIM_SUPPORT_AE)
+set(CommonLibName "CommonLibSSE")
+set(VERSION ${VERSION})
+
+find_commonlib_path()
+set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+set(VCPKG_TARGET_TRIPLET "x64-windows-static" CACHE STRING "")
+ 
+set(Boost_USE_STATIC_RUNTIME OFF CACHE BOOL "")
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "")
+
+# ---- Project ----
+
 project(
-	SkyrimSoulsRE
-	VERSION 2.4.0
+	${NAME}
+	VERSION ${VERSION}
 	LANGUAGES CXX
 )
-set(FORMATTED_NAME "Skyrim Souls RE")
-set(LICENSE "MIT License")
-set(AUTHOR "Vermunds")
 
-# Include guards
-if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
-	message(
-		FATAL_ERROR
-			"In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there."
-	)
-endif()
-
-# Configure files
 configure_file(
 	${CMAKE_CURRENT_SOURCE_DIR}/cmake/Version.h.in
 	${CMAKE_CURRENT_BINARY_DIR}/include/Version.h
@@ -31,20 +50,22 @@ configure_file(
 	@ONLY
 )
 
+# ---- Include guards ----
 
-# Include sources
-include(cmake/sourcelist.cmake)
-source_group(
-	TREE "${CMAKE_CURRENT_SOURCE_DIR}"
-	FILES ${SOURCES}
+if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
+	message(
+		FATAL_ERROR
+			"In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there."
+	)
+endif()
+
+# ---- Globals ----
+
+add_compile_definitions(
+	SKSE_SUPPORT_XBYAK
 )
 
-# Global compile definitions
 if (MSVC)
-	add_compile_definitions(
-		_UNICODE
-	)
-
 	if (NOT ${CMAKE_GENERATOR} STREQUAL "Ninja")
 		add_compile_options(
 			/MP	# Build with Multiple Processes
@@ -52,102 +73,94 @@ if (MSVC)
 	endif ()
 endif ()
 
-# Create DLL
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_DEBUG OFF)
+
+set(Boost_USE_STATIC_LIBS ON)
+
+# ---- Dependencies ----
+
+if (DEFINED CommonLibPath AND NOT ${CommonLibPath} STREQUAL "" AND IS_DIRECTORY ${CommonLibPath})
+	add_subdirectory(${CommonLibPath} ${CommonLibName})
+else ()
+	message(
+		FATAL_ERROR
+		"Variable ${CommonLibName} is not set."
+	)
+endif()
+
+# ---- Add source files ----
+include(cmake/headerlist.cmake)
+include(cmake/sourcelist.cmake)
+
+source_group(
+	TREE
+		${CMAKE_CURRENT_SOURCE_DIR}
+	FILES
+		${headers}
+		${sources}
+)
+
+source_group(
+	TREE
+		${CMAKE_CURRENT_BINARY_DIR}
+	FILES
+		${CMAKE_CURRENT_BINARY_DIR}/include/Version.h
+)
+
+# ---- Create DLL ----
 add_library(
 	${PROJECT_NAME}
 	SHARED
-	${SOURCES}
+	${headers}
+	${sources}
 	${CMAKE_CURRENT_BINARY_DIR}/include/Version.h
 	${CMAKE_CURRENT_BINARY_DIR}/version.rc
-	.clang-format
-	.editorconfig
 )
 
-# CXX standard
 target_compile_features(
 	${PROJECT_NAME}
 	PRIVATE
 		cxx_std_23
 )
 
-# Include directories
+target_compile_definitions(
+	${PROJECT_NAME}
+	PRIVATE
+		_UNICODE
+)
+
 target_include_directories(
 	${PROJECT_NAME}
 	PRIVATE
 		${CMAKE_CURRENT_BINARY_DIR}/include
-		${CMAKE_CURRENT_SOURCE_DIR}/src
+		${CMAKE_CURRENT_SOURCE_DIR}/include
 )
-
-target_include_directories(
-	${PROJECT_NAME}
-	PUBLIC
-		"$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-		"$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
-)
-
-# Precompile header
-target_precompile_headers(
-	${PROJECT_NAME}
-	PRIVATE
-		"include/PCH.h"
-)
-
-# Find and link dependencies
-find_package(spdlog REQUIRED CONFIG)
 
 target_link_libraries(
 	${PROJECT_NAME}
 	PRIVATE
-		CommonLibSSE::CommonLibSSE
-		spdlog::spdlog
+		${CommonLibName}::${CommonLibName}
 )
 
-# Compile definitions
+target_precompile_headers(
+	${PROJECT_NAME}
+	PRIVATE
+		include/PCH.h
+)
+
 if (MSVC)
 	target_compile_options(
 		${PROJECT_NAME}
 		PRIVATE
-			/sdl	# Enable Additional Security Checks
-			/utf-8	# Set Source and Executable character sets to UTF-8
-			/Zi	# Debug Information Format
+			/sdl             # Enable Additional Security Checks
+			/utf-8           # Set Source and Executable character sets to UTF-8
+			/Zi              # Debug Information Format
 
-			/permissive-	# Standards conformance
+			/permissive-     # Standards conformance
+			/Zc:preprocessor # Enable preprocessor conformance mode
 
-			/Zc:alignedNew	# C++17 over-aligned allocation
-			/Zc:auto	# Deduce Variable Type
-			/Zc:char8_t
-			/Zc:__cplusplus	# Enable updated __cplusplus macro
-			/Zc:externC
-			/Zc:externConstexpr	# Enable extern constexpr variables
-			/Zc:forScope	# Force Conformance in for Loop Scope
-			/Zc:hiddenFriend
-			/Zc:implicitNoexcept	# Implicit Exception Specifiers
-			/Zc:lambda
-			/Zc:noexceptTypes	# C++17 noexcept rules
-			/Zc:preprocessor	# Enable preprocessor conformance mode
-			/Zc:referenceBinding	# Enforce reference binding rules
-			/Zc:rvalueCast	# Enforce type conversion rules
-			/Zc:sizedDealloc	# Enable Global Sized Deallocation Functions
-			/Zc:strictStrings	# Disable string literal type conversion
-			/Zc:ternary	# Enforce conditional operator rules
-			/Zc:threadSafeInit	# Thread-safe Local Static Initialization
-			/Zc:tlsGuards
-			/Zc:trigraphs	# Trigraphs Substitution
-			/Zc:wchar_t	# wchar_t Is Native Type
-
-			# Warning -> error
-			/we4715	# 'function' : not all control paths return a value
-
-			# Disable warnings
-			/wd4458  # declaration hides class member
-			/wd4100 # unreferenced formal parameter
-
-
-			/external:anglebrackets
-			/external:W0
-
-			/W4	# Warning level
-			#/WX	# Warning level (warnings are errors)
+			/wd4200          # nonstandard extension used : zero-sized array in struct/union
 
 			"$<$<CONFIG:DEBUG>:>"
 			"$<$<CONFIG:RELEASE>:/Zc:inline;/JMC-;/Ob3>"
@@ -156,44 +169,52 @@ if (MSVC)
 	target_link_options(
 		${PROJECT_NAME}
 		PRIVATE
-			#/WX	# Treat Linker Warnings as Errors
-
 			"$<$<CONFIG:DEBUG>:/INCREMENTAL;/OPT:NOREF;/OPT:NOICF>"
 			"$<$<CONFIG:RELEASE>:/INCREMENTAL:NO;/OPT:REF;/OPT:ICF;/DEBUG:FULL>"
 	)
 endif ()
 
-target_compile_definitions(
-	"${PROJECT_NAME}"
-	PUBLIC
-		BOOST_STL_INTERFACES_DISABLE_CONCEPTS
-		WINVER=0x0601	# windows 7, minimum supported version by skyrim special edition
-		_WIN32_WINNT=0x0601
-		"$<$<BOOL:${SKSE_SUPPORT_XBYAK}>:SKSE_SUPPORT_XBYAK=1>"
-)
+# ---- Post build ----
+if(DEFINED ENV{SKYRIM_MODS_FOLDER} AND IS_DIRECTORY "$ENV{SKYRIM_MODS_FOLDER}")
+	if(BUILD_SKYRIMAE)
+		if (SUPPORT_LATEST)
+			set(OUTPUT_FOLDER "$ENV{SKYRIM_MODS_FOLDER}/${PROJECT_NAME} - Latest")
+		else()
+			set(OUTPUT_FOLDER "$ENV{SKYRIM_MODS_FOLDER}/${PROJECT_NAME} - 640")
+		endif()
+	else() 
+		set(OUTPUT_FOLDER "$ENV{SKYRIM_MODS_FOLDER}/${PROJECT_NAME} - 97")
+	endif()
+endif()
 
-# Function to copy build artifacts to the specified path
-function(copy_build_artifacts TARGET_NAME)
-    if (DEFINED SKYRIM_DATA_PATH)
-        set(INSTALL_PATH "${SKYRIM_DATA_PATH}/SKSE/Plugins")
-    elseif (DEFINED MO_MODS_FOLDER_PATH)
-        set(INSTALL_PATH "${MO_MODS_FOLDER_PATH}/${TARGET_NAME}/SKSE/Plugins")
-    else ()
-        message(STATUS "No install path specified for mod ${TARGET_NAME}. Skipping post-build copy command.")
-        return()
-    endif()
+if(DEFINED OUTPUT_FOLDER)
+    set(DLL_FOLDER "${OUTPUT_FOLDER}/SKSE/Plugins")
 
-	# Create the directories if they don't exist
-    file(MAKE_DIRECTORY ${INSTALL_PATH})
-
-    message(STATUS "Using install path for ${TARGET_NAME}: ${INSTALL_PATH}")
     add_custom_command(
-        TARGET ${TARGET_NAME}
+        TARGET "${PROJECT_NAME}"
         POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${TARGET_NAME}> ${INSTALL_PATH}
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_PDB_FILE:${TARGET_NAME}> ${INSTALL_PATH}
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:${PROJECT_NAME}>" "${DLL_FOLDER}/$<TARGET_FILE_NAME:${PROJECT_NAME}>"
+		COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_PDB_FILE:${PROJECT_NAME}>" "${DLL_FOLDER}/$<TARGET_PDB_FILE_NAME:${PROJECT_NAME}>"
+        VERBATIM
     )
-endfunction()
+endif()
 
-# Post build command
-copy_build_artifacts(${PROJECT_NAME})
+# https://gitlab.kitware.com/cmake/cmake/-/issues/24922#note_1371990
+if(MSVC_VERSION GREATER_EQUAL 1936 AND MSVC_IDE) # 17.6+
+	# When using /std:c++latest, "Build ISO C++23 Standard Library Modules" defaults to "Yes".
+	# Default to "No" instead.
+	#
+	# As of CMake 3.26.4, there isn't a way to control this property
+	# (https://gitlab.kitware.com/cmake/cmake/-/issues/24922),
+	# We'll use the MSBuild project system instead
+	# (https://learn.microsoft.com/en-us/cpp/build/reference/vcxproj-file-structure)
+	file(CONFIGURE OUTPUT "${CMAKE_BINARY_DIR}/Directory.Build.props" CONTENT [==[
+<Project>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <BuildStlModules>false</BuildStlModules>
+    </ClCompile>
+  </ItemDefinitionGroup>
+</Project>
+]==] @ONLY)
+endif()
