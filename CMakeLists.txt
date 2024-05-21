@@ -108,8 +108,6 @@ else ()
 	)
 endif()
 
-find_package(tomlplusplus CONFIG REQUIRED)
-
 # ---- Add source files ----
 
 include(cmake/headerlist.cmake)
@@ -159,14 +157,28 @@ target_include_directories(
 	${PROJECT_NAME}
 	PRIVATE
 		${CMAKE_CURRENT_BINARY_DIR}/include
-		${CMAKE_CURRENT_SOURCE_DIR}/include
+		${CMAKE_CURRENT_SOURCE_DIR}/src
+		${CLIB_UTIL_INCLUDE_DIRS}
+)
+
+target_include_directories(
+	${PROJECT_NAME}
+	PRIVATE
+		${CMAKE_CURRENT_BINARY_DIR}/include
+		${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+target_include_directories(
+	${PROJECT_NAME}
+	PUBLIC
+		"$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+		"$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
 
 target_link_libraries(
 	${PROJECT_NAME}
 	PRIVATE
 		${CommonLibName}::${CommonLibName}
-		tomlplusplus::tomlplusplus
 )
 
 target_precompile_headers(
