@@ -50,8 +50,7 @@ namespace SkyrimSoulsRE::CameraMovement
 			{
 				Xbyak::Label hookAddress;
 
-				pop(r13);
-				pop(r12);
+				add(rsp, 0x30);
 				pop(rdi);
 				mov(rcx, rax);
 				jmp(ptr[rip + hookAddress]);
@@ -64,6 +63,6 @@ namespace SkyrimSoulsRE::CameraMovement
 		CameraMove_Code code{ std::uintptr_t(CameraMove_Hook) };
 		void* codeLoc = SKSE::GetTrampoline().allocate(code);
 
-		SKSE::GetTrampoline().write_branch<5>(Offsets::Misc::ScreenEdgeCameraMoveHook.address() + 0x241, codeLoc);		//VERIFIED
+		SKSE::GetTrampoline().write_branch<5>(Offsets::Misc::ScreenEdgeCameraMoveHook.address() + 0x241, codeLoc);  //VERIFIED
 	}
 }
