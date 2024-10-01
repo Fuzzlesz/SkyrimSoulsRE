@@ -169,12 +169,12 @@ namespace SkyrimSoulsRE
 			keyCode = -1;
 		}
 
-		RE::GFxValue scope = this->scope;
+		//RE::GFxValue scope = this->scope; -compiler warning, hides class member
 
-		auto task = [keyCode, scope]() mutable {
+		auto task = [keyCode, this]() mutable {
 			RE::GFxValue arg;
 			arg.SetNumber(keyCode);
-			scope.Invoke("EndRemapMode", nullptr, &arg, 1);
+			this->scope.Invoke("EndRemapMode", nullptr, &arg, 1);  // Use 'this->scope' directly
 		};
 
 		UnpausedTaskQueue* queue = UnpausedTaskQueue::GetSingleton();

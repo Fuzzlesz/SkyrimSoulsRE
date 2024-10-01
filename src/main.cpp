@@ -1,8 +1,6 @@
 #include "EngineFixesChecker.h"
 #undef MessageBox
 
-#undef GetModuleHandle
-
 #include "SkyrimSoulsRE.h"
 
 constexpr auto MESSAGEBOX_ERROR = 0x00001010L;    // MB_OK | MB_ICONERROR | MB_SYSTEMMODAL
@@ -15,7 +13,7 @@ void MessageHandler(SKSE::MessagingInterface::Message* a_msg)
 			SkyrimSoulsRE::Settings* settings = SkyrimSoulsRE::Settings::GetSingleton();
 
 			bool engineFixesPresent = false;
-			if (SKSE::WinAPI::GetModuleHandle("EngineFixes.dll")) {
+			if (REX::W32::GetModuleHandle("EngineFixes.dll")) {
 				if (SkyrimSoulsRE::EngineFixesConfig::load_config("Data/SKSE/Plugins/EngineFixes.toml")) {
 					if (SkyrimSoulsRE::EngineFixesConfig::patchMemoryManager && SkyrimSoulsRE::EngineFixesConfig::fixGlobalTime) {
 						SKSE::log::info("SSE Engine Fixes detected.");
@@ -28,11 +26,11 @@ void MessageHandler(SKSE::MessagingInterface::Message* a_msg)
 				SKSE::log::warn("SSE Engine Fixes not detected, or certain features are not enabled.");
 				SKSE::log::warn("To ensure best functionality, the following Engine Fixes features must be enabled : Memory Manager patch, Global Time Fix");
 				if (!settings->hideEngineFixesWarning) {
-					SKSE::WinAPI::MessageBox(nullptr, "SSE Engine Fixes not detected, or certain features are not enabled. This will not prevent Skyrim Souls RE from running, but to ensure best functionality, the following Engine Fixes features must be enabled:\n\n- Memory Manager patch\n- Global Time Fix\n\nThe Memory Manager patch prevents the false save corruption bug that tends to happen with this mod, and the Global Time fix fixes the behaviour of some menus when using the slow-motion feature.\n\nIf you can't install SSE Engine Fixes for some reason (you're using Skyrim Together for example), you can disable this warning in the .ini.", "Skyrim Souls RE - Warning", MESSAGEBOX_WARNING);
+					REX::W32::MessageBoxA(nullptr, "SSE Engine Fixes not detected, or certain features are not enabled. This will not prevent Skyrim Souls RE from running, but to ensure best functionality, the following Engine Fixes features must be enabled:\n\n- Memory Manager patch\n- Global Time Fix\n\nThe Memory Manager patch prevents the false save corruption bug that tends to happen with this mod, and the Global Time fix fixes the behaviour of some menus when using the slow-motion feature.\n\nIf you can't install SSE Engine Fixes for some reason (you're using Skyrim Together for example), you can disable this warning in the .ini.", "Skyrim Souls RE - Warning", MESSAGEBOX_WARNING);
 				}
 			}
 
-			if (SKSE::WinAPI::GetModuleHandle("DialogueMovementEnabler.dll")) {
+			if (REX::W32::GetModuleHandle("DialogueMovementEnabler.dll")) {
 				SKSE::log::info("Dialogue Movement Enabler detected. Enabling compatibility.");
 				settings->isUsingDME = true;
 			} else {
@@ -98,7 +96,7 @@ extern "C" DLLEXPORT bool SKSEAPI
 
 extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(SKSE::LoadInterface* a_skse)
 {
-	
+		InitializeLog();
 		SKSE::AllocTrampoline(1 << 9, true);
 		SKSE::Init(a_skse);
 
